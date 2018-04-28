@@ -1,4 +1,4 @@
-package couchbase
+package influx
 
 import (
 	"sync"
@@ -6,12 +6,12 @@ import (
 	"github.com/elojah/services"
 )
 
-// Namespaces maps configs used for couchbase service with config file namespaces.
+// Namespaces maps configs used for influx service with config file namespaces.
 type Namespaces struct {
-	Couchbase services.Namespace
+	Influx services.Namespace
 }
 
-// Launcher represents a couchbase launcher.
+// Launcher represents a influx launcher.
 type Launcher struct {
 	*services.Configs
 	ns Namespaces
@@ -20,7 +20,7 @@ type Launcher struct {
 	m sync.Mutex
 }
 
-// NewLauncher returns a new couchbase Launcher.
+// NewLauncher returns a new influx Launcher.
 func (s *Service) NewLauncher(ns Namespaces, nsRead ...services.Namespace) *Launcher {
 	return &Launcher{
 		Configs: services.NewConfigs(nsRead...),
@@ -29,23 +29,23 @@ func (s *Service) NewLauncher(ns Namespaces, nsRead ...services.Namespace) *Laun
 	}
 }
 
-// Up starts the couchbase service with new configs.
+// Up starts the influx service with new configs.
 func (l *Launcher) Up(configs services.Configs) error {
 	l.m.Lock()
 	defer l.m.Unlock()
 
-	cbconfig := Config{}
-	if err := cbconfig.Dial(configs[l.ns.Couchbase]); err != nil {
+	sconfig := Config{}
+	if err := sconfig.Dial(configs[l.ns.Influx]); err != nil {
 		// Add namespace key when returning error with logrus
 		return err
 	}
-	return l.s.Dial(cbconfig)
+	return l.s.Dial(sconfig)
 }
 
-// Down stops the couchbase service.
+// Down stops the influx service.
 func (l *Launcher) Down(configs services.Configs) error {
 	l.m.Lock()
 	defer l.m.Unlock()
 
-	return nil
+	return l.s.Close()
 }

@@ -1,31 +1,30 @@
-package couchbase
+package influx
 
 import (
-	gocb "gopkg.in/couchbase/gocb.v1"
+	"github.com/influxdata/influxdb/client/v2"
 )
 
-// Service represents the couchbase service.
+// Service represents the influx service.
 type Service struct {
-	cluster *gocb.Cluster
-	bucket  *gocb.Bucket
+	client.Client
 }
 
 // Dial sends the new config to Service.
 func (s *Service) Dial(c Config) error {
 	var err error
+	s.Client, err = client.NewUDPClient(client.UDPConfig{
+		Addr:        c.Addr,
+		PayloadSize: c.PayloadSize,
+	})
+	return err
+}
 
-	if s.cluster, err = gocb.Connect(c.URL); err != nil {
-		return err
-	}
-	if s.bucket, err = s.cluster.OpenBucket(c.Bucket, ""); err != nil {
-		return err
-	}
-	return nil
+// Close closes the session to cluster session.
+func (s *Service) Close() error {
+	return s.Client.Close()
 }
 
 // Healthcheck returns if database responds.
 func (s *Service) Healthcheck() error {
-	q := gocb.NewN1qlQuery(`SELECT CLOCK_STR()`)
-	_, err := s.bucket.ExecuteN1qlQuery(q, nil)
-	return err
+	return nil
 }
